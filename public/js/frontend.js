@@ -60,6 +60,7 @@ socket.on('updatePlayers', (backEndPlayers) => {
         '#playerLabels'
       ).innerHTML += `<div data-id="${id}" data-score="${backEndPlayer.score}">${backEndPlayer.username}: ${backEndPlayer.score}</div>`
     } else {
+
       document.querySelector(
         `div[data-id="${id}"]`
       ).innerHTML = `${backEndPlayer.username}: ${backEndPlayer.score}`
@@ -96,6 +97,9 @@ socket.on('updatePlayers', (backEndPlayers) => {
 
       if (id === socket.id) {
         // if a player already exists
+        document.querySelector('#playerLives'
+        ).innerHTML = `Lives Remaining: ${backEndPlayer.lives} ♥`
+
         const lastBackendInputIndex = playerInputs.findIndex((input) => {
           return backEndPlayer.sequenceNumber === input.sequenceNumber
         })
@@ -121,6 +125,8 @@ socket.on('updatePlayers', (backEndPlayers) => {
       if (id === socket.id) {
         document.querySelector('#usernameForm').style.display = 'block'
       }
+      document.querySelector('#playerLives'
+      ).innerHTML = `Lives Remaining: 0 ♥`
       delete frontEndPlayers[id]
     }
   }
@@ -283,11 +289,24 @@ window.addEventListener('keyup', (event) => {
 
 
 document.querySelector('#usernameForm').addEventListener('submit', (event) => {
-  event.preventDefault()
-  document.querySelector('#usernameForm').style.display = 'none'
-  socket.emit('initGame', {
-    width: canvas.width,
-    height: canvas.height,
-    username: document.querySelector('#usernameInput').value
-  })
-})
+  event.preventDefault();
+
+  const usernameInput = document.querySelector('#usernameInput');
+  const username = usernameInput.value.trim(); // Trim to remove leading and trailing spaces
+
+  const errorMessage = document.getElementById('errorMessage');
+
+  if (username.length >= 1 && username.length <= 10) {
+    // Valid username length
+    errorMessage.style.display = 'none'; // Hide the error message
+    document.querySelector('#usernameForm').style.display = 'none';
+    socket.emit('initGame', {
+      width: canvas.width,
+      height: canvas.height,
+      username: username
+    });
+  } else {
+    // Invalid username length, show the error message
+    errorMessage.style.display = 'block';
+  }
+});

@@ -22,6 +22,7 @@ const SPEED = 6
 const RADIUS = 10
 const PROJECTILE_RADIUS = 5
 let projectileId = 0
+const LIVES = 3
 
 io.on('connection', (socket) => {
   console.log('a user connected')
@@ -50,7 +51,8 @@ io.on('connection', (socket) => {
       color: `hsl(${360 * Math.random()}, 100%, 50%)`,
       sequenceNumber: 0,
       score: 0,
-      username
+      username,
+      lives: LIVES,
     }
 
     backEndPlayers[socket.id].canvas = {
@@ -70,7 +72,7 @@ io.on('connection', (socket) => {
   socket.on('keydown', ({ keycode, sequenceNumber }) => {
     const backEndPlayer = backEndPlayers[socket.id]
 
-    if(!backEndPlayers[socket.id]) return
+    if (!backEndPlayers[socket.id]) return
     backEndPlayers[socket.id].sequenceNumber = sequenceNumber
     switch (keycode) {
       case 'KeyW':
@@ -143,10 +145,14 @@ setInterval(() => {
         DISTANCE < PROJECTILE_RADIUS + backEndPlayer.radius &&
         backEndProjectiles[id].playerId !== playerId
       ) {
-        if (backEndPlayers[backEndProjectiles[id].playerId])
+        if (backEndPlayers[backEndProjectiles[id].playerId]) {
           backEndPlayers[backEndProjectiles[id].playerId].score++
+          backEndPlayers[playerId].lives--;
+          if (backEndPlayers[playerId].lives === 0) {
+            delete backEndPlayers[playerId];
+          }
+        } 
         delete backEndProjectiles[id]
-        delete backEndPlayers[playerId]
         break
       }
     }
@@ -154,6 +160,8 @@ setInterval(() => {
   io.emit('updateProjectiles', backEndProjectiles)
   io.emit('updatePlayers', backEndPlayers)
 }, 15)
+
+
 
 server.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
